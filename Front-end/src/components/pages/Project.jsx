@@ -7,11 +7,13 @@ import Message from '../layout/Message'
 import { convertCentsForReal } from "../project/ProjectCards"
 import ProjectForm from "../project/ProjectForm"
 import ServiceForm from "../services/ServiceForm"
+import ServiceCards from "../services/ServiceCards"
 
 function Project(){
    
     const { id } = useParams()
     const [project, setProject] = useState([])
+    const [service, setService] = useState([])
     const [showProjectFrom, setShowProjectForm] = useState(false)
     const [showServiceFrom, setShowServiceForm] = useState(false)
     const [menssage, setMenssage] = useState()
@@ -28,6 +30,27 @@ function Project(){
     .then((data) => { setProject(data) })
     .catch((err) => console.log(err))
 }, [id])
+
+    useEffect( () => {
+        fetch(`http://localhost:8090/services/${id}`, {
+        method: 'GET',
+        headers: {
+                "content-type": "application/json"
+        }
+    })
+    .then(resp => resp.json())
+    .then((data) => { setService(data) })
+    .catch((err) => console.log(err))
+    }, [id])
+
+    const removeService = (serviceId) => {
+        setService(service.filter(service => service.id !== serviceId));
+    };
+
+    const adicionarService = (newService) => {
+        setService([...service, newService]);
+    };
+    
 
     function editProject(project) {
         setMenssage('')
@@ -65,6 +88,7 @@ function Project(){
         setShowServiceForm(!showServiceFrom)
     }
 
+
     return(
         <>{
             project.name ? 
@@ -86,7 +110,7 @@ function Project(){
                                 <span>Total Orçamento:</span> R$ {convertCentsForReal(project.budget_in_cents)}
                             </p>
                             <p>
-                                <span>Total Utilizado:</span> R$ {project.budget_in_cents}
+                                <span>Total Utilizado:</span> R$ {convertCentsForReal(project.cost)}
                             </p>
                         </div>
                     ) : (
@@ -102,13 +126,19 @@ function Project(){
                         </button>
                         <div className={Styles.project_info}>
                             {showServiceFrom && (
-                                <ServiceForm  textBtn="Adicionar Serviço"/>
+                                <ServiceForm  textBtn="Adicionar Serviço" project={project} closeFrom={toggleServiceForm} adicionarService={adicionarService}/>
                             )}
                         </div>
                     </div>
                     <h2>Serviços</h2>
                     <Container customClass="start">
-                        <p>Itens de Serviços</p>
+                        {service && service.length > 0 ? ( service.map((service) => (
+                                <ServiceCards 
+                                service={service}
+                                removeService={removeService}
+                                />
+                            ))) : 
+                            (<p>Sem Serviço cadastrado!</p>) }
                     </Container>
                 </Container>
             </div> 
